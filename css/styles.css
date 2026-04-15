@@ -1,0 +1,746 @@
+/* css/styles.css — ПОЛНЫЙ ФАЙЛ (ВСЁ КАК БЫЛО + ТОЛЬКО КВАДРАТИКИ И БИРЖА) */
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background: #141414;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.logo {
+    font-weight: 600;
+    font-size: 16px;
+    color: #fff;
+}
+
+.logo span {
+    color: #00bcd4;
+}
+
+/* ===== FILTERS ===== */
+.filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #aaa;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.1s;
+}
+
+.filter-btn:hover {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.filter-btn.active {
+    background: #00bcd4;
+    color: #000;
+    border-color: #00bcd4;
+}
+
+.filter-btn .count {
+    background: #333;
+    padding: 1px 4px;
+    border-radius: 8px;
+    font-size: 10px;
+}
+
+/* ===== SETTINGS ===== */
+.settings {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+select,
+.sort-select,
+.volume-filter {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+select option {
+    background: #1e1e1e;
+    color: #fff;
+}
+
+select optgroup {
+    background: #1e1e1e;
+    color: #888;
+    font-style: normal;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar {
+    padding: 6px 16px;
+    background: #1a1a1a;
+    font-size: 12px;
+    color: #aaa;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.refresh-btn,
+.alert-btn,
+.grid-settings-btn {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+}
+
+.refresh-btn:hover,
+.alert-btn:hover,
+.grid-settings-btn:hover {
+    background: #2a2a2a;
+}
+
+/* ===== GRID CONTAINER ===== */
+.grid-container {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    --grid-cols: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: var(--grid-cols);
+}
+
+/* ===== CHART CARD ===== */
+.chart-card {
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.signal-card {
+    border-left: 3px solid #ffb300;
+}
+
+/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+.chart-header {
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-bottom: 1px solid #222;
+    background: #141414;
+    flex-shrink: 0;
+}
+
+.symbol-text {
+    font-weight: 600;
+    color: #fff;
+    font-size: 12px;
+}
+
+/* 🔥 КВАДРАТИКИ F/S */
+.market-type-badge {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: #1e3a5f;
+}
+
+.market-type-badge.spot {
+    background: #1a5c2a;
+}
+
+/* 🔥 БИРЖА */
+.exchange-badge {
+    color: #aaa;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.chart-price {
+    font-family: monospace;
+    font-weight: 500;
+    font-size: 12px;
+    margin-left: auto;
+}
+
+.positive {
+    color: #00c853;
+}
+
+.negative {
+    color: #ff5252;
+}
+
+.chart-change {
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.chart-change.positive {
+    background: rgba(0, 200, 83, 0.15);
+}
+
+.chart-change.negative {
+    background: rgba(255, 82, 82, 0.15);
+}
+
+.volume-badge {
+    color: #888;
+    font-size: 10px;
+}
+
+.copy-symbol-btn,
+.alert-symbol-btn {
+    background: transparent;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    transition: color 0.2s;
+}
+
+.copy-symbol-btn:hover,
+.alert-symbol-btn:hover {
+    color: #fff;
+}
+
+/* ===== ГРАФИК ===== */
+.chart-body {
+    flex: 1;
+    height: 220px;          /* вместо min-height: 220px */
+    min-height: 220px;      /* оставь для надёжности */
+    position: relative;
+    background: #000000;
+    overflow: hidden;
+}
+
+.chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #555;
+    font-size: 12px;
+}
+
+/* ===== НИЖНЯЯ ПАНЕЛЬ ===== */
+.chart-footer {
+    display: none;
+}
+
+/* ===== METRIC BADGES ===== */
+.metric-badge {
+    background: #1e1e1e;
+    padding: 2px 5px;
+    border-radius: 10px;
+    font-size: 9px;
+    color: #aaa;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+.metric-badge.positive {
+    color: #00c853;
+}
+
+.metric-badge.negative {
+    color: #ff5252;
+}
+
+/* ===== SIGNAL BADGE ===== */
+.signal-badge {
+    background: #ffb300;
+    color: #000;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.confidence {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 3px;
+}
+
+.confidence-high {
+    background: #00c853;
+}
+
+.confidence-medium {
+    background: #ffb300;
+}
+
+.confidence-low {
+    background: #ff5252;
+}
+
+/* ===== LOADING ===== */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #333;
+    border-top-color: #00bcd4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: #141414;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+    position: relative;
+    border-bottom: 1px dotted #666;
+    cursor: help;
+}
+
+/* ===== PERIOD SELECTOR ===== */
+.period-selector {
+    display: flex;
+    gap: 3px;
+    margin-left: auto;
+}
+
+.period-btn {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #888;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.period-btn:hover {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.period-btn.active {
+    background: #00bcd4;
+    color: #000;
+    border-color: #00bcd4;
+}
+
+/* ===== ALERT BADGE ===== */
+.alert-badge {
+    background: #ffb300;
+    color: #000;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    width: 500px;
+    max-width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 6px;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+/* ===== FORM ===== */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 3px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    background: #0e0e0e;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #00bcd4;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 6px;
+}
+
+/* ===== ALERT LIST ===== */
+.alert-item {
+    background: #0e0e0e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert-item-info {
+    font-size: 11px;
+}
+
+.alert-item-info strong {
+    color: #fff;
+}
+
+.alert-item-remove {
+    color: #ff5252;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+}
+
+.alert-item-remove:hover {
+    color: #ff0000;
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+    background: #00bcd4;
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    font-size: 13px;
+    transition: background 0.1s;
+}
+
+.btn-primary:hover {
+    background: #00acc1;
+}
+
+.btn-secondary {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.1s;
+}
+
+.btn-secondary:hover {
+    background: #444;
+}
+
+/* ===== RETRY BUTTON ===== */
+.retry-chart-btn {
+    background: #333;
+    border: 1px solid #555;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.1s;
+}
+
+.retry-chart-btn:hover {
+    background: #444;
+    border-color: #777;
+}
+
+/* ===== CHART CARD BUTTONS ===== */
+.chart-card-buttons {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: flex;
+    gap: 3px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.chart-card:hover .chart-card-buttons {
+    opacity: 1;
+}
+
+.chart-card-buttons button {
+    width: 22px;
+    height: 22px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #404040;
+    border-radius: 3px;
+    color: #B0B0B0;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.chart-card-buttons button:hover {
+    background: #2D2D2D;
+    color: #FFFFFF;
+}
+
+/* ===== VOLUME SLIDER ===== */
+.volume-slider {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ===== SORT ROW ===== */
+.sort-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .settings {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .status-bar {
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+    }
+    
+    .grid-container {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .filters {
+        width: 100%;
+    }
+    
+    .filter-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-header {
+        flex-wrap: wrap;
+    }
+    
+    .settings {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .sort-row {
+        flex-wrap: wrap;
+    }
+    
+    .modal {
+        padding: 12px;
+    }
+    
+    .chart-body {
+        min-height: 220px;
+    }
+}
+
+/* ===== АНИМАЦИИ ===== */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.signal-card {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ===== FOCUS VISIBLE ===== */
+*:focus-visible {
+    outline: 2px solid #00bcd4;
+    outline-offset: 2px;
+}
+
+/* ===== DISABLED STATE ===== */
+button:disabled,
+select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state-text {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.empty-state-subtext {
+    font-size: 13px;
+    color: #555;
+}
