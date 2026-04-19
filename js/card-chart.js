@@ -351,7 +351,7 @@ addTimeframeSelector() {
         this.openFullscreen();
     });
     
-    const scrollBtn = this.createButton('▶▶', 'К последней свече', () => {
+    const scrollBtn = this.createButton('▶', 'К последней свече', () => {
         this.scrollToLast();
     });
     
