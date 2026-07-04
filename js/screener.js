@@ -448,22 +448,24 @@ class CryptoScreener {
             if (this.elements.marketStatus) this.elements.marketStatus.textContent = '❌ Ошибка загрузки';
         }
     }
-
-    updateCounts() {
-        const marketItems = [];
-        for (const t of this.marketTickers.values()) {
-            if (this.state.exchange !== 'all' && t.exchange !== this.state.exchange) continue;
-            if (t.volume24h < this.state.minVolume) continue;
-            marketItems.push(t);
-        }
-        const signalItems = Array.from(this.signals.values());
-        if (this.elements.counts.all) this.elements.counts.all.textContent = marketItems.length + signalItems.length;
-        if (this.elements.counts.market) this.elements.counts.market.textContent = marketItems.length;
-        if (this.elements.counts.signals) this.elements.counts.signals.textContent = signalItems.length;
-        if (this.elements.counts.gainers) this.elements.counts.gainers.textContent = marketItems.filter(t => t.change24h >= 3).length;
-        if (this.elements.counts.losers) this.elements.counts.losers.textContent = marketItems.filter(t => t.change24h <= -3).length;
-        if (this.elements.counts.volume) this.elements.counts.volume.textContent = marketItems.filter(t => t.volume24h > 1e7).length;
-    }
+updateCounts() {
+    const all = [...this.marketTickers.values()];
+    
+    // Счётчики для кнопок — из ВСЕХ тикеров, без фильтров
+    const allGainers = all.filter(t => t.change24h >= 5).length;
+    const allLosers = all.filter(t => t.change24h <= -5).length;
+    const allVolume = all.filter(t => t.volume24h > 1e7).length;
+    
+    const signalItems = Array.from(this.signals.values());
+    
+    if (this.elements.counts.all) this.elements.counts.all.textContent = all.length;
+    if (this.elements.counts.gainers) this.elements.counts.gainers.textContent = allGainers;
+    if (this.elements.counts.losers) this.elements.counts.losers.textContent = allLosers;
+    if (this.elements.counts.volume) this.elements.counts.volume.textContent = allVolume;
+    if (this.elements.counts.market) this.elements.counts.market.textContent = all.length;
+    if (this.elements.counts.signals) this.elements.counts.signals.textContent = signalItems.length;
+    if (this.elements.counts.watchlist) this.elements.counts.watchlist.textContent = this.watchlist.size;
+}
 
     async getMetricsForTicker(ticker) {
         const cacheKey = `${ticker.symbol}:${ticker.exchange}:${ticker.marketType}:${this.state.interval}`;
@@ -555,8 +557,8 @@ class CryptoScreener {
         const filter = this.state.filter;
         if (filter === 'signals') return false;
         if (filter === 'all' || filter === 'market') return this.checkQuickFilters(ticker);
-        if (filter === 'gainers' && ticker.change24h < 3) return false;
-        if (filter === 'losers' && ticker.change24h > -3) return false;
+       if (filter === 'gainers' && ticker.change24h < 5) return false;
+if (filter === 'losers' && ticker.change24h > -5) return false;
         if (filter === 'volume' && ticker.volume24h <= 1e7) return false;
         return this.checkQuickFilters(ticker);
     }
