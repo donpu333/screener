@@ -507,9 +507,10 @@ class CardChart {
         this.onLoadMoreCallback = callback;
     }
     
-    updateLastCandle(candle) {
-        if (this.chartData.length === 0) return;
-        
+   updateLastCandle(candle) {
+    if (!this.chart || !this.candleSeries || this.chartData.length === 0) return;
+    
+    try {
         const lastIndex = this.chartData.length - 1;
         const lastCandle = this.chartData[lastIndex];
         
@@ -524,16 +525,25 @@ class CardChart {
         this.barSeries.update(candle);
         
         if (this.volumeSeries) {
-            const volColor = candle.close >= candle.open 
-                ? this.bullishColor + '55' 
-                : this.bearishColor + '55';
             this.volumeSeries.update({
                 time: candle.time,
                 value: candle.volume || 0,
-                color: volColor
+                color: candle.close >= candle.open ? this.bullishColor + '55' : this.bearishColor + '55'
             });
         }
-    }
+        
+        if (this.tradesSeries) {
+            this.tradesSeries.update({
+                time: candle.time,
+                value: candle.trades || 0,
+                color: candle.close >= candle.open ? '#4fc3f788' : '#ef535088'
+            });
+        }
+        
+        const totalTrades = this.chartData.reduce((sum, c) => sum + (c.trades || 0), 0);
+        this.updateTradesLabel(totalTrades);
+    } catch(e) {}
+}
     
     setChartType(type) {
         this.currentChartType = type;
