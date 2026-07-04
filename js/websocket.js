@@ -211,30 +211,29 @@ class MarketWebSocket {
     }
     
     // ========== ОБНОВЛЕНИЕ ГРАФИКОВ ==========
+   updateChartCandle(symbol, candle, exchange) {
+    const cards = document.querySelectorAll('.chart-card');
     
-    updateChartCandle(symbol, candle, exchange) {
-        const cards = document.querySelectorAll('.chart-card');
+    for (const card of cards) {
+        const symbolSpan = card.querySelector('.symbol-text');
+        const exchangeBadge = card.querySelector('.exchange-badge');
         
-        for (const card of cards) {
-            const symbolSpan = card.querySelector('.symbol-text');
-            const exchangeBadge = card.querySelector('.exchange-badge');
-            
-            if (!symbolSpan || !exchangeBadge) continue;
-            
-            // 🔥 ИСПРАВЛЕНО: правильное сравнение 'BINANCE' и 'BYBIT'
-            const cardExchange = exchangeBadge.textContent === 'BINANCE' ? 'Binance' : 'Bybit';
-            const cardSymbol = symbolSpan.textContent + 'USDT';
-            
-            if (cardSymbol === symbol && cardExchange === exchange) {
-                const container = card.querySelector('.chart-body');
-                if (container && container._chartObj) {
+        if (!symbolSpan || !exchangeBadge) continue;
+        
+        const cardExchange = exchangeBadge.textContent === 'BINANCE' ? 'Binance' : 'Bybit';
+        const cardSymbol = symbolSpan.textContent + 'USDT';
+        
+        if (cardSymbol === symbol && cardExchange === exchange) {
+            const container = card.querySelector('.chart-body');
+            if (container && container._chartObj && container._chartObj.chart) {
+                try {
                     container._chartObj.updateLastCandle(candle);
-                }
-                break;
+                } catch(e) {}
             }
+            break;
         }
     }
-    
+}
     // 🔥 ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ МЕТОД
     updateCardPrice(symbol, price, exchange) {
         // Обновляем marketTickers
