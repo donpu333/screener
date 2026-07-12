@@ -121,6 +121,8 @@ class CryptoScreener {
             await this.loadMarketDataSilent();
             this.checkAnomalies();
             this.updateCounts();
+            // 🔥 ФИКС: При автообновлении тоже перерисовываем карточки
+            await this.renderGrid();
         }, 60000);
         
         this.setActiveFilterButton('gainers');
@@ -176,6 +178,10 @@ class CryptoScreener {
                 } catch (e) {}
             });
             await Promise.all(promises);
+            
+            const tickersToProcess = [...this.marketTickers.values()];
+            await this.fetchMultiDayChanges(tickersToProcess);
+            
             this.updateCounts();
         } catch (e) {}
     }
@@ -360,10 +366,11 @@ class CryptoScreener {
         }
 
         if (this.elements.minChangePeriodSelect) {
-            this.elements.minChangePeriodSelect.addEventListener('change', (e) => {
+            this.elements.minChangePeriodSelect.addEventListener('change', async (e) => {
                 this.state.minChangePeriod = e.target.value;
                 Utils.saveSettings(this.state);
-                debouncedRender();
+                // 🔥 ФИКС: Полностью перерисовываем сетку при смене периода
+                await this.renderGrid();
             });
         }
 
@@ -442,30 +449,45 @@ class CryptoScreener {
             });
             await Promise.all(promises);
             if (this.elements.marketStatus) this.elements.marketStatus.textContent = `✅ Загружено ${this.marketTickers.size} тикеров`;
+            
+            const tickersToProcess = [...this.marketTickers.values()];
+            await this.fetchMultiDayChanges(tickersToProcess);
+            
             this.updateCounts();
             await this.renderGrid();
         } catch (e) {
             if (this.elements.marketStatus) this.elements.marketStatus.textContent = '❌ Ошибка загрузки';
         }
     }
-updateCounts() {
-    const all = [...this.marketTickers.values()];
-    
-    // Счётчики для кнопок — из ВСЕХ тикеров, без фильтров
-    const allGainers = all.filter(t => t.change24h >= 5).length;
-    const allLosers = all.filter(t => t.change24h <= -5).length;
-    const allVolume = all.filter(t => t.volume24h > 1e7).length;
-    
-    const signalItems = Array.from(this.signals.values());
-    
-    if (this.elements.counts.all) this.elements.counts.all.textContent = all.length;
-    if (this.elements.counts.gainers) this.elements.counts.gainers.textContent = allGainers;
-    if (this.elements.counts.losers) this.elements.counts.losers.textContent = allLosers;
-    if (this.elements.counts.volume) this.elements.counts.volume.textContent = allVolume;
-    if (this.elements.counts.market) this.elements.counts.market.textContent = all.length;
-    if (this.elements.counts.signals) this.elements.counts.signals.textContent = signalItems.length;
-    if (this.elements.counts.watchlist) this.elements.counts.watchlist.textContent = this.watchlist.size;
-}
+
+    updateCounts() {
+        const all = [...this.marketTickers.values()];
+        
+        const period = this.state.minChangePeriod;
+        const prop = `change${period}`;
+        
+        const allGainers = all.filter(t => {
+            const change = (t[prop] !== undefined && t[prop] !== null) ? t[prop] : t.change24h;
+            return change >= 5;
+        }).length;
+        
+        const allLosers = all.filter(t => {
+            const change = (t[prop] !== undefined && t[prop] !== null) ? t[prop] : t.change24h;
+            return change <= -5;
+        }).length;
+        
+        const allVolume = all.filter(t => t.volume24h > 1e7).length;
+        
+        const signalItems = Array.from(this.signals.values());
+        
+        if (this.elements.counts.all) this.elements.counts.all.textContent = all.length;
+        if (this.elements.counts.gainers) this.elements.counts.gainers.textContent = allGainers;
+        if (this.elements.counts.losers) this.elements.counts.losers.textContent = allLosers;
+        if (this.elements.counts.volume) this.elements.counts.volume.textContent = allVolume;
+        if (this.elements.counts.market) this.elements.counts.market.textContent = all.length;
+        if (this.elements.counts.signals) this.elements.counts.signals.textContent = signalItems.length;
+        if (this.elements.counts.watchlist) this.elements.counts.watchlist.textContent = this.watchlist.size;
+    }
 
     async getMetricsForTicker(ticker) {
         const cacheKey = `${ticker.symbol}:${ticker.exchange}:${ticker.marketType}:${this.state.interval}`;
@@ -556,9 +578,15 @@ updateCounts() {
         
         const filter = this.state.filter;
         if (filter === 'signals') return false;
+        
+        const period = this.state.minChangePeriod;
+        const prop = `change${period}`;
+        const change = (ticker[prop] !== undefined && ticker[prop] !== null) ? ticker[prop] : ticker.change24h;
+
         if (filter === 'all' || filter === 'market') return this.checkQuickFilters(ticker);
-       if (filter === 'gainers' && ticker.change24h < 5) return false;
-if (filter === 'losers' && ticker.change24h > -5) return false;
+        
+        if (filter === 'gainers' && change < 5) return false;
+        if (filter === 'losers' && change > -5) return false;
         if (filter === 'volume' && ticker.volume24h <= 1e7) return false;
         return this.checkQuickFilters(ticker);
     }
@@ -596,6 +624,9 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
         if (this.state.minGrowth > 0) {
             const allGrowths = [
                 ticker.change24h || 0,
+                ticker.change3d || 0,
+                ticker.change5d || 0,
+                ticker.change7d || 0,
                 m.change1h ?? -Infinity,
                 m.change15m ?? -Infinity,
                 m.change5m ?? -Infinity,
@@ -607,6 +638,9 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
         if (this.state.minDrop > 0) {
             const allDrops = [
                 ticker.change24h || 0,
+                ticker.change3d || 0,
+                ticker.change5d || 0,
+                ticker.change7d || 0,
                 m.change1h ?? Infinity,
                 m.change15m ?? Infinity,
                 m.change5m ?? Infinity,
@@ -620,13 +654,23 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
         
         return true;
     }
-
-    async renderGrid() {
+    
+  async renderGrid() {
+    console.log('🔄 renderGrid вызван, период:', this.state.minChangePeriod);
     this.updateCounts();
-    this.pool.clear();
+    
+    // 🔥 ФИКС: Корректно освобождаем все графики перед очисткой
     if (this.virtualScroll) {
-        document.querySelectorAll('.chart-card').forEach(c => this.virtualScroll.unobserve(c));
+        document.querySelectorAll('.chart-card').forEach(card => {
+            this.virtualScroll.unobserve(card);
+            const container = card.querySelector('.chart-body');
+            if (container) {
+                this.pool.release(container);
+            }
+        });
     }
+    
+    this.pool.clear();
     this.elements.grid.innerHTML = '<div class="loading"><div class="spinner"></div>Фильтрация...</div>';
     
     let items = [];
@@ -639,7 +683,14 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
     }
     
     if (filter !== 'signals') {
-        for (const ticker of this.marketTickers.values()) {
+        let tickersToProcess = [...this.marketTickers.values()].filter(t => {
+            if (this.state.exchange !== 'all' && t.exchange !== this.state.exchange) return false;
+            if (t.volume24h < this.state.minVolume) return false;
+            if (this.state.searchQuery && !t.symbol.toUpperCase().includes(this.state.searchQuery)) return false;
+            return true;
+        });
+
+        for (const ticker of tickersToProcess) {
             if (this.shouldDisplayMarketBasic(ticker)) {
                 items.push({ type: 'market', data: ticker });
             }
@@ -655,9 +706,7 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
         const marketItems = items.filter(i => i.type === 'market').map(i => i.data);
         if (marketItems.length > 0) {
             this.elements.grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка метрик...</div>';
-            // 🔥 Загружаем метрики для ВСЕХ market-тикеров, не только отфильтрованных
             await this.fetchMetricsForBatch(marketItems);
-            // Теперь фильтруем
             items = items.filter(item => {
                 if (item.type === 'signal') return true;
                 return this.shouldDisplayMarketAdvanced(item.data);
@@ -691,6 +740,7 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
         this.elements.marketStatus.textContent = `✅ Показано ${limitedItems.length} карточек`;
     }
 }
+    
     async fetchMetricsForBatch(tickers) {
         const batchSize = 15;
         const needDayCandles = this.state.minRvol > 0;
@@ -729,55 +779,122 @@ if (filter === 'losers' && ticker.change24h > -5) return false;
             }));
         }
     }
+    
+    async fetchMultiDayChanges(tickers) {
+        const batchSize = 15;
+        const periods = [
+            { key: '3d', days: 3 },
+            { key: '5d', days: 5 },
+            { key: '7d', days: 7 }
+        ];
+        
+        for (let i = 0; i < tickers.length; i += batchSize) {
+            const batch = tickers.slice(i, i + batchSize);
+            await Promise.all(batch.map(async (ticker) => {
+                if (ticker.change3d !== undefined && ticker.change5d !== undefined && ticker.change7d !== undefined) return;
 
+                const adapter = ExchangeAdapters.getAdapterByName(this.marketAdapters, ticker.exchange);
+                if (!adapter) return;
+
+                try {
+                    const candles = await adapter.fetchKlines(ticker.symbol, '1d', 10, null, ticker.marketType);
+                    
+                    if (candles && candles.length >= 2) {
+                        const currentPrice = ticker.price || candles[candles.length - 1].close;
+                        
+                        for (const period of periods) {
+                            const prop = `change${period.key}`;
+                            if (ticker[prop] !== undefined) continue;
+                            
+                            const targetIndex = Math.max(0, candles.length - period.days - 1);
+                            const oldPrice = candles[targetIndex].open;
+                            
+                            if (oldPrice > 0) {
+                                ticker[prop] = ((currentPrice - oldPrice) / oldPrice) * 100;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Оставляем undefined при ошибке
+                }
+            }));
+        }
+    }
+    
     async sortItems(items) {
+        const sortPeriod = this.state.minChangePeriod;
+        
         items.sort((a, b) => {
             if (a.type === 'signal') return -1;
             if (b.type === 'signal') return 1;
-            return Math.abs(b.data.change24h || 0) - Math.abs(a.data.change24h || 0);
+            
+            let changeA = a.data.change24h || 0;
+            let changeB = b.data.change24h || 0;
+            
+            if (['3d', '5d', '7d'].includes(sortPeriod)) {
+                const prop = `change${sortPeriod}`;
+                if (a.data[prop] !== undefined) changeA = a.data[prop];
+                if (b.data[prop] !== undefined) changeB = b.data[prop];
+            }
+            
+            return Math.abs(changeB) - Math.abs(changeA);
         });
         return items;
     }
     
-    createMarketCard(ticker) {
-        const card = document.createElement('div');
-        card.className = 'chart-card';
-        card.dataset.symbol = ticker.symbol;
-        card.dataset.exchange = ticker.exchange;
-        card.dataset.marketType = ticker.marketType;
-        card.dataset.loaded = 'false';
-        
-        const pos = ticker.change24h >= 0;
-        const posClass = pos ? 'positive' : 'negative';
-        const cleanSymbol = ticker.symbol.replace('USDT', '');
-        const isSpot = ticker.marketType === 'spot';
-        
-        const flagKey = `${ticker.symbol}:${ticker.exchange}:${ticker.marketType}`;
-        const savedColor = this.state.flags?.[flagKey];
-        const flagClass = savedColor ? `flag flag-${savedColor}` : 'flag-placeholder';
-        
-        card.innerHTML = `
-            <div class="chart-header">
-                <span class="symbol-text">${cleanSymbol}</span>
-                <button class="copy-symbol-btn" title="${ticker.symbol}">📋</button>
-                <span class="market-type-badge ${isSpot ? 'spot' : ''}">${isSpot ? 'S' : 'F'}</span>
-                <span class="exchange-badge">${ticker.exchange === 'Binance' ? 'BINANCE' : 'BYBIT'}</span>
-                <span class="chart-price ${posClass}">${Utils.formatPrice(ticker.price)}</span>
-                <span class="chart-change ${posClass}">${Utils.formatChange(ticker.change24h)}</span>
-                <span class="volume-badge">${Utils.formatVolume(ticker.volume24h)}</span>
-                ${ticker.tradesCount > 0 ? `<span class="trades-badge">${Utils.formatTrades(ticker.tradesCount)}</span>` : ''}
-            </div>
-            <div class="chart-body"><div class="chart-placeholder">📊</div></div>
-        `;
-        
-        card.querySelector('.copy-symbol-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            navigator.clipboard.writeText(ticker.symbol);
-        });
-        
-        return card;
+ createMarketCard(ticker) {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.dataset.symbol = ticker.symbol;
+    card.dataset.exchange = ticker.exchange;
+    card.dataset.marketType = ticker.marketType;
+    card.dataset.loaded = 'false';
+    
+    // 🔥 ФИКС: Определяем, какое изменение показывать на карточке
+    let displayChange = ticker.change24h;
+    const period = this.state.minChangePeriod;
+    
+    if (['3d', '5d', '7d'].includes(period)) {
+        const prop = `change${period}`;
+        if (ticker[prop] !== undefined && ticker[prop] !== null) {
+            displayChange = ticker[prop];
+            console.log(`✅ ${ticker.symbol}: показываем ${period} = ${displayChange.toFixed(2)}%`);
+        } else {
+            console.warn(`⚠️ ${ticker.symbol}: ${prop} = undefined, fallback на 24h`);
+        }
     }
 
+    const pos = displayChange >= 0;
+    const posClass = pos ? 'positive' : 'negative';
+    const cleanSymbol = ticker.symbol.replace('USDT', '');
+    const isSpot = ticker.marketType === 'spot';
+    
+    const flagKey = `${ticker.symbol}:${ticker.exchange}:${ticker.marketType}`;
+    const savedColor = this.state.flags?.[flagKey];
+    const flagClass = savedColor ? `flag flag-${savedColor}` : 'flag-placeholder';
+    
+    card.innerHTML = `
+        <div class="chart-header">
+            <span class="symbol-text">${cleanSymbol}</span>
+            <button class="copy-symbol-btn" title="${ticker.symbol}">📋</button>
+            <span class="market-type-badge ${isSpot ? 'spot' : ''}">${isSpot ? 'S' : 'F'}</span>
+            <span class="exchange-badge">${ticker.exchange === 'Binance' ? 'BINANCE' : 'BYBIT'}</span>
+            <span class="chart-price ${posClass}">${Utils.formatPrice(ticker.price)}</span>
+            <span class="chart-change ${posClass}">${Utils.formatChange(displayChange)}</span>
+            <span class="volume-badge">${Utils.formatVolume(ticker.volume24h)}</span>
+            ${ticker.tradesCount > 0 ? `<span class="trades-badge">${Utils.formatTrades(ticker.tradesCount)}</span>` : ''}
+        </div>
+        <div class="chart-body"><div class="chart-placeholder">📊</div></div>
+    `;
+    
+    card.querySelector('.copy-symbol-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(ticker.symbol);
+    });
+    
+    return card;
+}
+    
     createSignalCard(signal) {
         const card = document.createElement('div');
         card.className = 'chart-card signal-card';
